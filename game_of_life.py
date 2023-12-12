@@ -37,6 +37,7 @@
 import pygame
 import numpy as np
 import os
+from abc import ABC, abstractmethod
 
 # Initialize Pygame
 pygame.init()
@@ -64,19 +65,64 @@ gray = (128, 128, 128)
 green = (0, 255, 0)
 red = (255, 0, 0)
 
+# Button Click Strategy
+class ClickStrategy:
+    @abstractmethod
+    def click(self):
+        pass
+
+class DefaultClickStrategy(ClickStrategy):
+    def click(self):
+        pass
+
+class NextGenClickStrategy(ClickStrategy):
+    def click(self):
+        next_generation()
+
+class SaveClickStrategy(ClickStrategy):
+    def click(self):
+        save_game_state()
+
+class LoadClickStrategy(ClickStrategy):
+    def click(self):
+        load_game_state()
+
+class PlayClickStrategy(ClickStrategy):
+    def click(self):
+        global play_button_state
+        if play_button_state == "play":
+            pygame.time.set_timer(AUTO_NEXT_GEN_EVENT, auto_next_gen_interval)
+            play_button_state = "pause"
+            play_button.text = "Pause"
+            play_button.color = red
+        else:
+            pygame.time.set_timer(AUTO_NEXT_GEN_EVENT, 0)
+            play_button_state = "play"
+            play_button.text = "Play"
+            play_button.color = green
+            
 # Button Factory:
 class ButtonFactory:
-    def create_button(self, x, y, width, height, text, color):
-        return Button(x, y, width, height, text, color)
+    def create_button(self, x, y, width, height, text, color, click_strategy=DefaultClickStrategy()):
+        return Button(x, y, width, height, text, color, click_strategy)
+    def create_next_gen_button(self, x, y, width, height, text, color):
+        return Button(x, y, width, height, text, color, NextGenClickStrategy())
+    def create_save_button(self, x, y, width, height, text, color):
+        return Button(x, y, width, height, text, color, SaveClickStrategy())
+    def create_load_button(self, x, y, width, height, text, color):
+        return Button(x, y, width, height, text, color, LoadClickStrategy())
+    def create_play_button(self, x, y, width, height, text, color):
+        return Button(x, y, width, height, text, color, PlayClickStrategy())
 
 class Button:
-    def __init__(self, x, y, width, height, text, color):
+    def __init__(self, x, y, width, height, text, color, click_strategy=DefaultClickStrategy()):
         self.x = x
         self.y = y
         self.width = width
         self.height = height
         self.text = text
         self.color = color
+        self.click_strategy = click_strategy
     
     def draw(self):
         pygame.draw.rect(screen, self.color, (self.x, self.y, self.width, self.height))
@@ -88,12 +134,18 @@ class Button:
     def is_clicked(self, pos):
         return self.x <= pos[0] <= self.x + self.width and self.y <= pos[1] <= self.y + self.height
     
+    def click(self):
+        self.click_strategy.click()
+
+    def setColor(self, color):
+        self.color = color
+    
 # Button instances
 button_factory = ButtonFactory()
-next_gen_button = button_factory.create_button((width - 200) // 2, height - 60, 200, 50, "Next Generation", green)
-save_button = button_factory.create_button(20, 20, 200, 50, "Save", green)
-load_button = button_factory.create_button(20, 90, 200, 50, "Load", green)
-play_button = button_factory.create_button(next_gen_button.x + next_gen_button.width + 10, next_gen_button.y, 50, 50, "Play", green)
+next_gen_button = button_factory.create_next_gen_button(20, 160, 200, 50, "Next Gen", green)
+save_button = button_factory.create_save_button(20, 230, 200, 50, "Save", green)
+load_button = button_factory.create_load_button(20, 300, 200, 50, "Load", green)
+play_button = button_factory.create_play_button(20, 370, 200, 50, "Play", green)
 
 # Buttons dimensions
 play_button_state = "play"
@@ -148,9 +200,21 @@ def load_game_state():
     except:
         pass
 
+def check_save_file_exists():
+    return os.path.isfile("game_state.txt")
+
+def update_load_button_color():
+    if check_save_file_exists():
+        load_button.setColor(green)
+    else:
+        load_button.setColor(red)
+
 running = True
 while running:
     screen.fill(white)
+
+    update_load_button_color()
+
     draw_grid()
     draw_cells()
     next_gen_button.draw()
@@ -164,22 +228,13 @@ while running:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
             if next_gen_button.is_clicked(event.pos):
-                next_generation()
-            if play_button.is_clicked(event.pos):
-                if play_button_state == "play":
-                    pygame.time.set_timer(AUTO_NEXT_GEN_EVENT, auto_next_gen_interval)
-                    play_button_state = "pause"
-                    play_button.text = "Pause"
-                    play_button.color = red
-                else:
-                    pygame.time.set_timer(AUTO_NEXT_GEN_EVENT, 0)
-                    play_button_state = "play"
-                    play_button.text = "Play"
-                    play_button.color = green
+                next_gen_button.click()
             elif save_button.is_clicked(event.pos):
-                save_game_state()
+                save_button.click()
             elif load_button.is_clicked(event.pos):
-                load_game_state()
+                load_button.click()
+            elif play_button.is_clicked(event.pos):
+                play_button.click()
             else:
                 x, y = event.pos[0] // cell_width, event.pos[1] // cell_height
                 game_state[x, y] = not game_state[x, y]
