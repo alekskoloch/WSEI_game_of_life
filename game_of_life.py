@@ -58,7 +58,9 @@ black = (0, 0, 0)
 gray = (128, 128, 128)
 green = (0, 255, 0)
 
-# Button dimensions
+# Buttons dimensions
+play_button_state = "play"
+margin = 20
 button_width, button_height = 200, 50
 button_x, button_y = (width - button_width) // 2, height - button_height - 10
 
@@ -68,6 +70,24 @@ def draw_button():
     text = font.render("Next Generation", True, black)
     text_rect = text.get_rect(center=(button_x + button_width // 2, button_y + button_height // 2))
     screen.blit(text, text_rect)
+
+def draw_play_button():
+    global play_button_state
+
+    play_button_x, play_button_y = button_x + button_width + 10, button_y  # 10 is the margin
+    play_button_width, play_button_height = 50, 50
+    pygame.draw.rect(screen, green, (play_button_x, play_button_y, play_button_width, play_button_height))
+
+    if play_button_state == "play":
+        # Draw play triangle
+        triangle = [(play_button_x + 15, play_button_y + 10), 
+                    (play_button_x + 35, play_button_y + 25), 
+                    (play_button_x + 15, play_button_y + 40)]
+        pygame.draw.polygon(screen, black, triangle)
+    else:
+        # Draw pause symbol
+        pygame.draw.rect(screen, black, (play_button_x + 15, play_button_y + 10, 7, 30))
+        pygame.draw.rect(screen, black, (play_button_x + 28, play_button_y + 10, 7, 30))
 
 def draw_grid():
     for y in range(0, height, cell_height):
@@ -110,6 +130,7 @@ while running:
     draw_grid()
     draw_cells()
     draw_button()
+    draw_play_button()
     pygame.display.flip()
 
     for event in pygame.event.get():
@@ -118,6 +139,11 @@ while running:
         if event.type == pygame.MOUSEBUTTONDOWN:
             if button_x <= event.pos[0] <= button_x + button_width and button_y <= event.pos[1] <= button_y + button_height:
                 next_generation()
+            if button_x + button_width + 10 <= event.pos[0] <= button_x + button_width + 10 + 50 and button_y <= event.pos[1] <= button_y + 50:
+                if play_button_state == "play":
+                    play_button_state = "pause"
+                else:
+                    play_button_state = "play"
             else:
                 x, y = event.pos[0] // cell_width, event.pos[1] // cell_height
                 game_state[x, y] = not game_state[x, y]
