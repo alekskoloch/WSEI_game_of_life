@@ -37,17 +37,59 @@
 import pygame
 import numpy as np
 import os
-from abc import ABC, abstractmethod
+import json
+from abc import abstractmethod
+
+# Singleton Settings Loader
+class SettingsLoader:
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(SettingsLoader, cls).__new__(cls)
+            cls._instance.load_settings()
+        return cls._instance
+    
+    def load_settings(self):
+        try:
+            with open("config.json", "r") as file:
+                self.settings = json.load(file)
+        except:
+            print("Error loading settings file")
+            self.settings = {}
+
+    def get_setting(self, key):
+        value = self.settings.get(key)
+        if value is not None:
+            try:
+                if isinstance(value, str):
+                    return value
+                elif isinstance(value, int):
+                    return int(value)
+                elif isinstance(value, float):
+                    return float(value)
+                elif isinstance(value, bool):
+                    return bool(value)
+                elif isinstance(value, list):
+                    return value
+                else:
+                    return value
+            except ValueError:
+                return value
+        return None
 
 # Initialize Pygame
 pygame.init()
 
+# Initialize Settings Loader
+config = SettingsLoader()
+
 # Screen dimensions
-width, height = 800, 600
+width, height = config.get_setting("SCREEN_WIDTH"), config.get_setting("SCREEN_HEIGHT")
 screen = pygame.display.set_mode((width, height))
 
 # Grid dimensions
-n_cells_x, n_cells_y = 40, 30
+n_cells_x, n_cells_y = config.get_setting("CELLS_X"), config.get_setting("CELLS_Y")
 cell_width = width // n_cells_x
 cell_height = height // n_cells_y
 
@@ -56,14 +98,14 @@ game_state = np.random.choice([0, 1], size=(n_cells_x, n_cells_y), p=[0.8, 0.2])
 
 # Define a timer event for automatic progression
 AUTO_NEXT_GEN_EVENT = pygame.USEREVENT + 1
-auto_next_gen_interval = 50
+auto_next_gen_interval = config.get_setting("AUTO_NEXT_GEN_TIME_MS")
 
 # Colors
-white = (255, 255, 255)
-black = (0, 0, 0)
-gray = (128, 128, 128)
-green = (0, 255, 0)
-red = (255, 0, 0)
+white = config.get_setting("COLOR_WHITE")
+black = config.get_setting("COLOR_BLACK")
+gray = config.get_setting("COLOR_GRAY")
+green = config.get_setting("COLOR_GREEN")
+red = config.get_setting("COLOR_RED")
 
 # Button Click Strategy
 class ClickStrategy:
@@ -141,11 +183,12 @@ class Button:
         self.color = color
     
 # Button instances
+button_width, button_height = config.get_setting("STANDARD_BUTTON_WIDTH"), config.get_setting("STANDARD_BUTTON_HEIGHT")
 button_factory = ButtonFactory()
-next_gen_button = button_factory.create_next_gen_button(20, 160, 200, 50, "Next Gen", green)
-save_button = button_factory.create_save_button(20, 230, 200, 50, "Save", green)
-load_button = button_factory.create_load_button(20, 300, 200, 50, "Load", green)
-play_button = button_factory.create_play_button(20, 370, 200, 50, "Play", green)
+next_gen_button = button_factory.create_next_gen_button(width // 2 - button_width - 10, height - button_height - 20, button_width, button_height, "Next Gen", green)
+play_button = button_factory.create_play_button(width // 2 + 10, height - button_height - 20, button_width, button_height, "Play", green)
+save_button = button_factory.create_save_button(20, 230, button_width, button_height, "Save", green)
+load_button = button_factory.create_load_button(20, 300, button_width, button_height, "Load", green)
 
 # Buttons dimensions
 play_button_state = "play"
