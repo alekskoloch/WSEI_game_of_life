@@ -64,54 +64,39 @@ gray = (128, 128, 128)
 green = (0, 255, 0)
 red = (255, 0, 0)
 
+# Button Factory:
+class ButtonFactory:
+    def create_button(self, x, y, width, height, text, color):
+        return Button(x, y, width, height, text, color)
+
+class Button:
+    def __init__(self, x, y, width, height, text, color):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.text = text
+        self.color = color
+    
+    def draw(self):
+        pygame.draw.rect(screen, self.color, (self.x, self.y, self.width, self.height))
+        font = pygame.font.Font(None, 36)
+        text = font.render(self.text, True, black)
+        text_rect = text.get_rect(center=(self.x + self.width // 2, self.y + self.height // 2))
+        screen.blit(text, text_rect)
+
+    def is_clicked(self, pos):
+        return self.x <= pos[0] <= self.x + self.width and self.y <= pos[1] <= self.y + self.height
+    
+# Button instances
+button_factory = ButtonFactory()
+next_gen_button = button_factory.create_button((width - 200) // 2, height - 60, 200, 50, "Next Generation", green)
+save_button = button_factory.create_button(20, 20, 200, 50, "Save", green)
+load_button = button_factory.create_button(20, 90, 200, 50, "Load", green)
+play_button = button_factory.create_button(next_gen_button.x + next_gen_button.width + 10, next_gen_button.y, 50, 50, "Play", green)
+
 # Buttons dimensions
 play_button_state = "play"
-margin = 20
-button_width, button_height = 200, 50
-button_x, button_y = (width - button_width) // 2, height - button_height - 10
-
-def draw_button():
-    pygame.draw.rect(screen, green, (button_x, button_y, button_width, button_height))
-    font = pygame.font.Font(None, 36)
-    text = font.render("Next Generation", True, black)
-    text_rect = text.get_rect(center=(button_x + button_width // 2, button_y + button_height // 2))
-    screen.blit(text, text_rect)
-
-def draw_save_button():
-    pygame.draw.rect(screen, green, (margin, margin, button_width, button_height))
-    font = pygame.font.Font(None, 36)
-    text = font.render("Save", True, black)
-    text_rect = text.get_rect(center=(margin + button_width // 2, margin + button_height // 2))
-    screen.blit(text, text_rect)
-
-def draw_load_button():
-    if os.path.exists("game_state.txt"):
-        button_color = green
-    else:
-        button_color = red
-    pygame.draw.rect(screen, button_color, (margin, margin + button_height + margin, button_width, button_height))
-    font = pygame.font.Font(None, 36)
-    text = font.render("Load", True, black)
-    text_rect = text.get_rect(center=(margin + button_width // 2, margin + button_height + margin + button_height // 2))
-    screen.blit(text, text_rect)
-
-def draw_play_button():
-    global play_button_state
-
-    play_button_x, play_button_y = button_x + button_width + 10, button_y  # 10 is the margin
-    play_button_width, play_button_height = 50, 50
-    pygame.draw.rect(screen, green, (play_button_x, play_button_y, play_button_width, play_button_height))
-
-    if play_button_state == "play":
-        # Draw play triangle
-        triangle = [(play_button_x + 15, play_button_y + 10), 
-                    (play_button_x + 35, play_button_y + 25), 
-                    (play_button_x + 15, play_button_y + 40)]
-        pygame.draw.polygon(screen, black, triangle)
-    else:
-        # Draw pause symbol
-        pygame.draw.rect(screen, black, (play_button_x + 15, play_button_y + 10, 7, 30))
-        pygame.draw.rect(screen, black, (play_button_x + 28, play_button_y + 10, 7, 30))
 
 def draw_grid():
     for y in range(0, height, cell_height):
@@ -168,28 +153,32 @@ while running:
     screen.fill(white)
     draw_grid()
     draw_cells()
-    draw_button()
-    draw_play_button()
-    draw_save_button()
-    draw_load_button()
+    next_gen_button.draw()
+    save_button.draw()
+    load_button.draw()
+    play_button.draw()
     pygame.display.flip()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if button_x <= event.pos[0] <= button_x + button_width and button_y <= event.pos[1] <= button_y + button_height:
+            if next_gen_button.is_clicked(event.pos):
                 next_generation()
-            elif button_x + button_width + 10 <= event.pos[0] <= button_x + button_width + 10 + 50 and button_y <= event.pos[1] <= button_y + 50:
+            if play_button.is_clicked(event.pos):
                 if play_button_state == "play":
-                    play_button_state = "pause"
                     pygame.time.set_timer(AUTO_NEXT_GEN_EVENT, auto_next_gen_interval)
+                    play_button_state = "pause"
+                    play_button.text = "Pause"
+                    play_button.color = red
                 else:
-                    play_button_state = "play"
                     pygame.time.set_timer(AUTO_NEXT_GEN_EVENT, 0)
-            elif margin <= event.pos[0] <= margin + button_width and margin <= event.pos[1] <= margin + button_height:
+                    play_button_state = "play"
+                    play_button.text = "Play"
+                    play_button.color = green
+            elif save_button.is_clicked(event.pos):
                 save_game_state()
-            elif margin <= event.pos[0] <= margin + button_width and margin + button_height + margin <= event.pos[1] <= margin + button_height + margin + button_height:
+            elif load_button.is_clicked(event.pos):
                 load_game_state()
             else:
                 x, y = event.pos[0] // cell_width, event.pos[1] // cell_height
