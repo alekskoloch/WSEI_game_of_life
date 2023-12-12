@@ -142,6 +142,18 @@ def draw_cells():
             if game_state[x, y] == 1:
                 pygame.draw.rect(screen, black, cell)
 
+def save_game_state():
+    global game_state
+    with open("game_state.txt", "w") as file:
+        for row in game_state:
+            file.write(' '.join(str(cell) for cell in row) + '\n')
+
+def load_game_state():
+    global game_state
+    with open("game_state.txt", "r") as file:
+        lines = file.readlines()
+        game_state = np.array([list(map(int, line.split())) for line in lines])
+
 running = True
 while running:
     screen.fill(white)
@@ -166,6 +178,10 @@ while running:
                 else:
                     play_button_state = "play"
                     pygame.time.set_timer(AUTO_NEXT_GEN_EVENT, 0)
+            elif margin <= event.pos[0] <= margin + button_width and margin <= event.pos[1] <= margin + button_height:
+                save_game_state()
+            elif margin <= event.pos[0] <= margin + button_width and margin + button_height + margin <= event.pos[1] <= margin + button_height + margin + button_height:
+                load_game_state()
             else:
                 x, y = event.pos[0] // cell_width, event.pos[1] // cell_height
                 game_state[x, y] = not game_state[x, y]
