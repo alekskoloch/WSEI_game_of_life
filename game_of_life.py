@@ -36,6 +36,7 @@
 
 import pygame
 import numpy as np
+import os
 
 # Initialize Pygame
 pygame.init()
@@ -61,6 +62,7 @@ white = (255, 255, 255)
 black = (0, 0, 0)
 gray = (128, 128, 128)
 green = (0, 255, 0)
+red = (255, 0, 0)
 
 # Buttons dimensions
 play_button_state = "play"
@@ -83,7 +85,11 @@ def draw_save_button():
     screen.blit(text, text_rect)
 
 def draw_load_button():
-    pygame.draw.rect(screen, green, (margin, margin + button_height + margin, button_width, button_height))
+    if os.path.exists("game_state.txt"):
+        button_color = green
+    else:
+        button_color = red
+    pygame.draw.rect(screen, button_color, (margin, margin + button_height + margin, button_width, button_height))
     font = pygame.font.Font(None, 36)
     text = font.render("Load", True, black)
     text_rect = text.get_rect(center=(margin + button_width // 2, margin + button_height + margin + button_height // 2))
@@ -150,9 +156,12 @@ def save_game_state():
 
 def load_game_state():
     global game_state
-    with open("game_state.txt", "r") as file:
-        lines = file.readlines()
-        game_state = np.array([list(map(int, line.split())) for line in lines])
+    try:
+        with open("game_state.txt", "r") as file:
+            lines = file.readlines()
+            game_state = np.array([list(map(int, line.split())) for line in lines])
+    except:
+        pass
 
 running = True
 while running:
