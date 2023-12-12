@@ -82,6 +82,13 @@ def draw_save_button():
     text_rect = text.get_rect(center=(margin + button_width // 2, margin + button_height // 2))
     screen.blit(text, text_rect)
 
+def draw_load_button():
+    pygame.draw.rect(screen, green, (margin, margin + button_height + margin, button_width, button_height))
+    font = pygame.font.Font(None, 36)
+    text = font.render("Load", True, black)
+    text_rect = text.get_rect(center=(margin + button_width // 2, margin + button_height + margin + button_height // 2))
+    screen.blit(text, text_rect)
+
 def draw_play_button():
     global play_button_state
 
@@ -143,6 +150,7 @@ while running:
     draw_button()
     draw_play_button()
     draw_save_button()
+    draw_load_button()
     pygame.display.flip()
 
     for event in pygame.event.get():
