@@ -1,0 +1,15 @@
+{
+    "SCREEN_WIDTH": 800,
+    "SCREEN_HEIGHT": 600,
+    "CELLS_X": 40,
+    "CELLS_Y": 30,
+    "AUTO_NEXT_GEN_TIME_MS": 50,
+    "FONT_SIZE": 36,
+    "STANDARD_BUTTON_WIDTH": 200,
+    "STANDARD_BUTTON_HEIGHT": 50,
+    "COLOR_WHITE": [255, 255, 255],
+    "COLOR_BLACK": [0, 0, 0],
+    "COLOR_GRAY": [128, 128, 128],
+    "COLOR_RED": [255, 0, 0],
+    "COLOR_GREEN": [0, 255, 0]
+}
