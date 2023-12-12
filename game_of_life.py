@@ -52,6 +52,10 @@ cell_height = height // n_cells_y
 # Game state
 game_state = np.random.choice([0, 1], size=(n_cells_x, n_cells_y), p=[0.8, 0.2])
 
+# Define a timer event for automatic progression
+AUTO_NEXT_GEN_EVENT = pygame.USEREVENT + 1
+auto_next_gen_interval = 50
+
 # Colors
 white = (255, 255, 255)
 black = (0, 0, 0)
@@ -139,13 +143,17 @@ while running:
         if event.type == pygame.MOUSEBUTTONDOWN:
             if button_x <= event.pos[0] <= button_x + button_width and button_y <= event.pos[1] <= button_y + button_height:
                 next_generation()
-            if button_x + button_width + 10 <= event.pos[0] <= button_x + button_width + 10 + 50 and button_y <= event.pos[1] <= button_y + 50:
+            elif button_x + button_width + 10 <= event.pos[0] <= button_x + button_width + 10 + 50 and button_y <= event.pos[1] <= button_y + 50:
                 if play_button_state == "play":
                     play_button_state = "pause"
+                    pygame.time.set_timer(AUTO_NEXT_GEN_EVENT, auto_next_gen_interval)
                 else:
                     play_button_state = "play"
+                    pygame.time.set_timer(AUTO_NEXT_GEN_EVENT, 0)
             else:
                 x, y = event.pos[0] // cell_width, event.pos[1] // cell_height
                 game_state[x, y] = not game_state[x, y]
+        elif event.type == AUTO_NEXT_GEN_EVENT:
+            next_generation()
 
 pygame.quit()
